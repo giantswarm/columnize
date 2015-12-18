@@ -240,3 +240,20 @@ func TestMergeConfig(t *testing.T) {
 		t.Fatalf("bad: %#v", m)
 	}
 }
+
+func TestDontCountColorCodes(t *testing.T) {
+	input := []string{
+		"\x1b[31;1mColumn A\x1b[0m | \x1b[32mColumn B\x1b[0m | \x1b[34mColumn C\x1b[0m",
+		"x | y | z",
+	}
+
+	config := DefaultConfig()
+	output := Format(input, config)
+
+	expected := "\x1b[31;1mColumn A\x1b[0m  \x1b[32mColumn B\x1b[0m  \x1b[34mColumn C\x1b[0m\n"
+	expected += "x         y         z"
+
+	if output != expected {
+		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
+	}
+}

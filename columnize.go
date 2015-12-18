@@ -50,7 +50,8 @@ func getWidthsFromLines(config *Config, lines []string) []int {
 	for _, line := range lines {
 		elems := getElementsFromLine(config, line)
 		for i := 0; i < len(elems); i++ {
-			l := len(elems[i].(string))
+			// remove color code for counting the length
+			l := len(removeColorCode(elems[i].(string)))
 			if len(widths) <= i {
 				widths = append(widths, l)
 			} else if widths[i] < l {
@@ -131,4 +132,13 @@ func Format(lines []string, config *Config) string {
 // Convenience function for using Columnize as easy as possible.
 func SimpleFormat(lines []string) string {
 	return Format(lines, nil)
+}
+
+func removeColorCode(s string) string {
+	if strings.Contains(s, "\x1b[") {
+		start := strings.Index(s, "m") + 1
+		end := strings.Index(s, "\x1b[0")
+		return s[start:end]
+	}
+	return s
 }
