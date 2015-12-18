@@ -65,16 +65,35 @@ func getWidthsFromLines(config *Config, lines []string) []int {
 // Given a set of column widths and the number of columns in the current line,
 // returns a sprintf-style format string which can be used to print output
 // aligned properly with other lines using the same widths set.
-func (c *Config) getStringFormat(widths []int, columns int) string {
+// func (c *Config) getStringFormat(widths []int, columns int) string {
+// 	// Start with the prefix, if any was given.
+// 	stringfmt := c.Prefix
+
+// 	// Create the format string from the discovered widths
+// 	for i := 0; i < columns && i < len(widths); i++ {
+// 		if i == columns-1 {
+// 			stringfmt += "%s\n"
+// 		} else {
+// 			stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
+// 		}
+// 	}
+// 	return stringfmt
+// }
+
+func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 	// Start with the prefix, if any was given.
 	stringfmt := c.Prefix
 
 	// Create the format string from the discovered widths
-	for i := 0; i < columns && i < len(widths); i++ {
-		if i == columns-1 {
+	for i := 0; i < len(elems) && i < len(widths); i++ {
+		if i == len(elems)-1 {
 			stringfmt += "%s\n"
 		} else {
-			stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
+			if containsColorCode(elems[i]) {
+				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i]+colorCodeLen(elems[i].(string)), c.Glue)
+			} else {
+				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
+			}
 		}
 	}
 	return stringfmt
@@ -117,7 +136,7 @@ func Format(lines []string, config *Config) string {
 	// Create the formatted output using the format string
 	for _, line := range lines {
 		elems := getElementsFromLine(conf, line)
-		stringfmt := conf.getStringFormat(widths, len(elems))
+		stringfmt := conf.getStringFormat(widths, elems)
 		result += fmt.Sprintf(stringfmt, elems...)
 	}
 
@@ -132,6 +151,19 @@ func Format(lines []string, config *Config) string {
 // Convenience function for using Columnize as easy as possible.
 func SimpleFormat(lines []string) string {
 	return Format(lines, nil)
+}
+
+func containsColorCode(i interface{}) bool {
+	s, ok := i.(string)
+	if ok {
+		return strings.Contains(s, "\x1b[")
+	}
+	return false
+}
+
+func colorCodeLen(s string) int {
+	withoutColorCodes := removeColorCode(s)
+	return len(s) - len(withoutColorCodes)
 }
 
 func removeColorCode(s string) string {

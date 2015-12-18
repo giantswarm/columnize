@@ -1,6 +1,8 @@
 package columnize
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestListOfStringsInput(t *testing.T) {
 	input := []string{
@@ -244,14 +246,14 @@ func TestMergeConfig(t *testing.T) {
 func TestDontCountColorCodes(t *testing.T) {
 	input := []string{
 		"\x1b[31;1mColumn A\x1b[0m | \x1b[32mColumn B\x1b[0m | \x1b[34mColumn C\x1b[0m",
-		"x | y | z",
+		"Longer than A | Longer than B | Longer than C",
 	}
 
 	config := DefaultConfig()
 	output := Format(input, config)
 
-	expected := "\x1b[31;1mColumn A\x1b[0m  \x1b[32mColumn B\x1b[0m  \x1b[34mColumn C\x1b[0m\n"
-	expected += "x         y         z"
+	expected := "\x1b[31;1mColumn A\x1b[0m       \x1b[32mColumn B\x1b[0m       \x1b[34mColumn C\x1b[0m\n"
+	expected += "Longer than A  Longer than B  Longer than C\n"
 
 	if output != expected {
 		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
