@@ -3,6 +3,8 @@ Columnize
 
 Easy column-formatted output for golang
 
+Note: this fork of https://github.com/ryanuber/columnize adds a cheap implementation to work with coloured text using some ANSII excape codes
+
 [![Build Status](https://travis-ci.org/giantswarm/columnize.svg)](https://travis-ci.org/giantswarm/columnize)
 
 Columnize is a really small Go package that makes building CLI's a little bit
@@ -17,7 +19,7 @@ package main
 
 import (
     "fmt"
-    "github.com/ryanuber/columnize"
+    "github.com/giantswarm/columnize"
 )
 
 func main() {
