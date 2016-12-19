@@ -1,6 +1,7 @@
 package columnize
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -253,9 +254,11 @@ func TestDontCountColorCodes(t *testing.T) {
 	output := Format(input, config)
 
 	expected := "\x1b[31;1mColumn A\x1b[0m       \x1b[32mColumn B\x1b[0m       \x1b[34mColumn C\x1b[0m\n"
-	expected += "Longer than A  Longer than B  Longer than C\n"
+	expected += "Longer than A  Longer than B  Longer than C"
 
 	if output != expected {
-		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
+		printableProof := fmt.Sprintf("\nGot:      %+q", output)
+		printableProof += fmt.Sprintf("\nExpected: %+q", expected)
+		t.Fatalf("\n%s", printableProof)
 	}
 }
