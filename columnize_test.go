@@ -2,6 +2,7 @@ package columnize
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -74,6 +75,27 @@ func TestColumnWidthCalculator(t *testing.T) {
 
 	if output != expected {
 		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
+	}
+}
+
+func TestColumnWidthCalculatorNonASCII(t *testing.T) {
+	input := []string{
+		"Column A | Column B | Column C",
+		"⌘⌘⌘⌘⌘⌘⌘⌘ | Longer than B | Longer than C",
+		"short | short | short",
+	}
+
+	config := DefaultConfig()
+	output := Format(input, config)
+
+	expected := "Column A  Column B       Column C\n"
+	expected += "⌘⌘⌘⌘⌘⌘⌘⌘  Longer than B  Longer than C\n"
+	expected += "short     short          short"
+
+	if output != expected {
+		printableProof := fmt.Sprintf("\nGot:      %+q", output)
+		printableProof += fmt.Sprintf("\nExpected: %+q", expected)
+		t.Fatalf("\n%s", printableProof)
 	}
 }
 
@@ -241,6 +263,77 @@ func TestMergeConfig(t *testing.T) {
 	m = MergeConfig(conf1, &Config{})
 	if m.Delim != "a" || m.Glue != "a" || m.Prefix != "a" || m.Empty != "a" {
 		t.Fatalf("bad: %#v", m)
+	}
+}
+
+func TestGetWidthsFromLines01(t *testing.T) {
+	config := DefaultConfig()
+	input := []string{"first|line", "second|line", "third     |line"}
+	expected := []int{6, 4}
+	output := getWidthsFromLines(config, input)
+	if !reflect.DeepEqual(output, expected) {
+		printableProof := fmt.Sprintf("\nGot:      %s", output)
+		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
+func TestGetWidthsFromLines02(t *testing.T) {
+	config := DefaultConfig()
+	input := []string{"\x1b[32mfirst\x1b[0m|line", "second|line"}
+	expected := []int{6, 4}
+	output := getWidthsFromLines(config, input)
+	if !reflect.DeepEqual(output, expected) {
+		printableProof := fmt.Sprintf("\nGot:      %s", output)
+		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
+// testing width calculation for non-ASCII cahracters
+func TestGetWidthsFromLines03(t *testing.T) {
+	config := DefaultConfig()
+	input := []string{"A|B", "⌘|⌘"}
+	expected := []int{1, 1}
+	output := getWidthsFromLines(config, input)
+	if !reflect.DeepEqual(output, expected) {
+		printableProof := fmt.Sprintf("\nGot:      %s", output)
+		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
+// testing width calculation for strings with UTF-8 characters and color codes
+func TestGetWidthsFromLines04(t *testing.T) {
+	config := DefaultConfig()
+	input := []string{"\x1b[32m⌘\x1b[0m|⌘", "A|B"}
+	expected := []int{1, 1}
+	output := getWidthsFromLines(config, input)
+	if !reflect.DeepEqual(output, expected) {
+		printableProof := fmt.Sprintf("\nGot:      %s", output)
+		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
+func TestGetStringFormat01(t *testing.T) {
+	config := DefaultConfig()
+	widths := []int{13, 13, 3}
+	elems := getElementsFromLine(config, "first element | second element | end")
+	expected := "%-13s  %-13s  %s\n"
+	output := config.getStringFormat(widths, elems)
+	if output != expected {
+		t.Fatalf("\nGot:      %s\nExpected: %s", output, expected)
+	}
+}
+func TestGetStringFormat02(t *testing.T) {
+	config := DefaultConfig()
+	widths := []int{13, 13, 15, 3}
+	elems := getElementsFromLine(config, "first element | second item ⌘ | third element \x1b[32m⌘\x1b[0m | end")
+	output := config.getStringFormat(widths, elems)
+	expected := "%-13s  %-13s  %-24s  %s\n"
+	if output != expected {
+		t.Fatalf("\nGot:      %q\nExpected: %q", output, expected)
 	}
 }
 
