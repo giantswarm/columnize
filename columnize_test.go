@@ -244,6 +244,17 @@ func TestMergeConfig(t *testing.T) {
 	}
 }
 
+func TestRemoveColorCode01(t *testing.T) {
+	input := "  \x1b[36;1mtest\x1b[0m  "
+	output := removeColorCode(input)
+	expected := "  test  "
+	if output != expected {
+		printableProof := fmt.Sprintf("\nGot:      %+q", output)
+		printableProof += fmt.Sprintf("\nExpected: %+q", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
 func TestDontCountColorCodes(t *testing.T) {
 	input := []string{
 		"\x1b[31;1mColumn A\x1b[0m | \x1b[32mColumn B\x1b[0m | \x1b[34mColumn C\x1b[0m",

@@ -2,6 +2,7 @@ package columnize
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -102,7 +103,7 @@ func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 // MergeConfig merges two config objects together and returns the resulting
 // configuration. Values from the right take precedence over the left side.
 func MergeConfig(a, b *Config) *Config {
-	var result Config = *a
+	var result = *a
 
 	// Return quickly if either side was nil
 	if a == nil || b == nil {
@@ -148,11 +149,12 @@ func Format(lines []string, config *Config) string {
 	return result
 }
 
-// Convenience function for using Columnize as easy as possible.
+// SimpleFormat is a convenience function for using Columnize as easy as possible.
 func SimpleFormat(lines []string) string {
 	return Format(lines, nil)
 }
 
+// containsColorCode returns true if the string contains an ANSII escape code for color
 func containsColorCode(i interface{}) bool {
 	s, ok := i.(string)
 	if ok {
@@ -161,16 +163,18 @@ func containsColorCode(i interface{}) bool {
 	return false
 }
 
+// return length of a string, not including ANSII escape codes
 func colorCodeLen(s string) int {
 	withoutColorCodes := removeColorCode(s)
 	return len(s) - len(withoutColorCodes)
 }
 
+// remove ANSII escape color codes from a string
 func removeColorCode(s string) string {
 	if strings.Contains(s, "\x1b[") {
-		start := strings.Index(s, "m") + 1
-		end := strings.Index(s, "\x1b[0")
-		return s[start:end]
+		// remove various sorts of opening tags
+		re := regexp.MustCompile("\x1b" + `\[[^m]+m`)
+		s = re.ReplaceAllString(s, "")
 	}
 	return s
 }
