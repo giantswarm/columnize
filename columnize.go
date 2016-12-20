@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Config is the configuration for columnize
 type Config struct {
 	// The string by which the lines of input will be split.
 	Delim string
@@ -20,7 +21,14 @@ type Config struct {
 	Empty string
 }
 
-// Returns a Config with default values.
+// Regular expression used to find/remove ANSII escape codes for color
+var ansiiColorCodeRegexp *regexp.Regexp
+
+func init() {
+	ansiiColorCodeRegexp = regexp.MustCompile("\x1b\\[[^m]+m")
+}
+
+// DefaultConfig returns a Config with default values.
 func DefaultConfig() *Config {
 	return &Config{
 		Delim:  "|",
@@ -43,6 +51,22 @@ func getElementsFromLine(config *Config, line string) []interface{} {
 	return elements
 }
 
+// runeLen calculates the number of runes in a string
+func runeLen(s string) int {
+	l := 0
+	for _ = range s {
+		l++
+	}
+	return l
+}
+
+// runeLenWithoutANSII calculates the number of visible runes in a string,
+// not counting ANSII escape codes for color
+func runeLenWithoutANSII(s string) int {
+	s = ansiiColorCodeRegexp.ReplaceAllString(s, "")
+	return runeLen(s)
+}
+
 // Examines a list of strings and determines how wide each column should be
 // considering all of the elements that need to be printed within it.
 func getWidthsFromLines(config *Config, lines []string) []int {
@@ -52,7 +76,7 @@ func getWidthsFromLines(config *Config, lines []string) []int {
 		elems := getElementsFromLine(config, line)
 		for i := 0; i < len(elems); i++ {
 			// remove color code for counting the length
-			l := len(removeColorCode(elems[i].(string)))
+			l := runeLenWithoutANSII(elems[i].(string))
 			if len(widths) <= i {
 				widths = append(widths, l)
 			} else if widths[i] < l {
@@ -62,24 +86,6 @@ func getWidthsFromLines(config *Config, lines []string) []int {
 	}
 	return widths
 }
-
-// Given a set of column widths and the number of columns in the current line,
-// returns a sprintf-style format string which can be used to print output
-// aligned properly with other lines using the same widths set.
-// func (c *Config) getStringFormat(widths []int, columns int) string {
-// 	// Start with the prefix, if any was given.
-// 	stringfmt := c.Prefix
-
-// 	// Create the format string from the discovered widths
-// 	for i := 0; i < columns && i < len(widths); i++ {
-// 		if i == columns-1 {
-// 			stringfmt += "%s\n"
-// 		} else {
-// 			stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
-// 		}
-// 	}
-// 	return stringfmt
-// }
 
 func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 	// Start with the prefix, if any was given.
@@ -91,7 +97,8 @@ func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 			stringfmt += "%s\n"
 		} else {
 			if containsColorCode(elems[i]) {
-				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i]+colorCodeLen(elems[i].(string)), c.Glue)
+				addOn := runeLen(elems[i].(string)) - runeLenWithoutANSII(elems[i].(string))
+				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i]+addOn, c.Glue)
 			} else {
 				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
 			}
@@ -154,27 +161,11 @@ func SimpleFormat(lines []string) string {
 	return Format(lines, nil)
 }
 
-// containsColorCode returns true if the string contains an ANSII escape code for color
+// containsColorCode returns true if the string contains an ANSII escape code
 func containsColorCode(i interface{}) bool {
 	s, ok := i.(string)
 	if ok {
 		return strings.Contains(s, "\x1b[")
 	}
 	return false
-}
-
-// return length of a string, not including ANSII escape codes
-func colorCodeLen(s string) int {
-	withoutColorCodes := removeColorCode(s)
-	return len(s) - len(withoutColorCodes)
-}
-
-// remove ANSII escape color codes from a string
-func removeColorCode(s string) string {
-	if strings.Contains(s, "\x1b[") {
-		// remove various sorts of opening tags
-		re := regexp.MustCompile("\x1b" + `\[[^m]+m`)
-		s = re.ReplaceAllString(s, "")
-	}
-	return s
 }
