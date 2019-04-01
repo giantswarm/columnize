@@ -103,9 +103,6 @@ func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 		} else {
 			if containsANSIICode(elems[i]) {
 				addOn := runeLen(elems[i].(string)) - runeLenWithoutANSII(elems[i].(string))
-				fmt.Println(elems[i].(string))
-				fmt.Println("runeLen", runeLen(elems[i].(string)))
-				fmt.Println("runLenANSII", runeLenWithoutANSII(elems[i].(string)))
 				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i]+addOn, c.Glue)
 			} else {
 				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i], c.Glue)
