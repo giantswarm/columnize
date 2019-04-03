@@ -272,8 +272,8 @@ func TestGetWidthsFromLines01(t *testing.T) {
 	expected := []int{6, 4}
 	output := getWidthsFromLines(config, input)
 	if !reflect.DeepEqual(output, expected) {
-		printableProof := fmt.Sprintf("\nGot:      %s", output)
-		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		printableProof := fmt.Sprintf("\nGot:      %d", output)
+		printableProof += fmt.Sprintf("\nExpected: %d", expected)
 		t.Fatalf("\n%s", printableProof)
 	}
 }
@@ -284,8 +284,8 @@ func TestGetWidthsFromLines02(t *testing.T) {
 	expected := []int{6, 4}
 	output := getWidthsFromLines(config, input)
 	if !reflect.DeepEqual(output, expected) {
-		printableProof := fmt.Sprintf("\nGot:      %s", output)
-		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		printableProof := fmt.Sprintf("\nGot:      %d", output)
+		printableProof += fmt.Sprintf("\nExpected: %d", expected)
 		t.Fatalf("\n%s", printableProof)
 	}
 }
@@ -297,8 +297,8 @@ func TestGetWidthsFromLines03(t *testing.T) {
 	expected := []int{1, 1}
 	output := getWidthsFromLines(config, input)
 	if !reflect.DeepEqual(output, expected) {
-		printableProof := fmt.Sprintf("\nGot:      %s", output)
-		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		printableProof := fmt.Sprintf("\nGot:      %d", output)
+		printableProof += fmt.Sprintf("\nExpected: %d", expected)
 		t.Fatalf("\n%s", printableProof)
 	}
 }
@@ -310,8 +310,8 @@ func TestGetWidthsFromLines04(t *testing.T) {
 	expected := []int{1, 1}
 	output := getWidthsFromLines(config, input)
 	if !reflect.DeepEqual(output, expected) {
-		printableProof := fmt.Sprintf("\nGot:      %s", output)
-		printableProof += fmt.Sprintf("\nExpected: %s", expected)
+		printableProof := fmt.Sprintf("\nGot:      %d", output)
+		printableProof += fmt.Sprintf("\nExpected: %d", expected)
 		t.Fatalf("\n%s", printableProof)
 	}
 }
@@ -348,6 +348,25 @@ func TestDontCountColorCodes(t *testing.T) {
 
 	expected := "\x1b[31;1mColumn A\x1b[0m       \x1b[32mColumn B\x1b[0m       \x1b[34mColumn C\x1b[0m\n"
 	expected += "Longer than A  Longer than B  Longer than C"
+
+	if output != expected {
+		printableProof := fmt.Sprintf("\nGot:      %+q", output)
+		printableProof += fmt.Sprintf("\nExpected: %+q", expected)
+		t.Fatalf("\n%s", printableProof)
+	}
+}
+
+func TestDontCountANSIURL(t *testing.T) {
+	input := []string{
+		"\033]8;;http://example.com\033\\Column A\033]8;;\033\\ | \033]8;;http://example.com\033\\Column B\033]8;;\033\\",
+		"Longer than A | Longer than B",
+	}
+
+	config := DefaultConfig()
+	output := Format(input, config)
+
+	expected := "\033]8;;http://example.com\033\\Column A\033]8;;\033\\       \033]8;;http://example.com\033\\Column B\033]8;;\033\\\n"
+	expected += "Longer than A  Longer than B"
 
 	if output != expected {
 		printableProof := fmt.Sprintf("\nGot:      %+q", output)

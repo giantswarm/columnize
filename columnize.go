@@ -24,8 +24,12 @@ type Config struct {
 // Regular expression used to find/remove ANSII escape codes for color
 var ansiiColorCodeRegexp *regexp.Regexp
 
+// Regular expression used to find/remove ANSII escape codes for urls
+var ansiiURLRegexp *regexp.Regexp
+
 func init() {
 	ansiiColorCodeRegexp = regexp.MustCompile("\x1b\\[[^m]+m")
+	ansiiURLRegexp = regexp.MustCompile("\033]8;;.*?\033\\\\")
 }
 
 // DefaultConfig returns a Config with default values.
@@ -64,6 +68,7 @@ func runeLen(s string) int {
 // not counting ANSII escape codes for color
 func runeLenWithoutANSII(s string) int {
 	s = ansiiColorCodeRegexp.ReplaceAllString(s, "")
+	s = ansiiURLRegexp.ReplaceAllString(s, "")
 	return runeLen(s)
 }
 
@@ -96,7 +101,7 @@ func (c *Config) getStringFormat(widths []int, elems []interface{}) string {
 		if i == len(elems)-1 {
 			stringfmt += "%s\n"
 		} else {
-			if containsColorCode(elems[i]) {
+			if containsANSIICode(elems[i]) {
 				addOn := runeLen(elems[i].(string)) - runeLenWithoutANSII(elems[i].(string))
 				stringfmt += fmt.Sprintf("%%-%ds%s", widths[i]+addOn, c.Glue)
 			} else {
@@ -161,11 +166,11 @@ func SimpleFormat(lines []string) string {
 	return Format(lines, nil)
 }
 
-// containsColorCode returns true if the string contains an ANSII escape code
-func containsColorCode(i interface{}) bool {
+// containsANSIICode returns true if the string contains an ANSII escape code
+func containsANSIICode(i interface{}) bool {
 	s, ok := i.(string)
 	if ok {
-		return strings.Contains(s, "\x1b[")
+		return strings.Contains(s, "\x1b")
 	}
 	return false
 }
