@@ -326,6 +326,7 @@ func TestGetStringFormat01(t *testing.T) {
 		t.Fatalf("\nGot:      %s\nExpected: %s", output, expected)
 	}
 }
+
 func TestGetStringFormat02(t *testing.T) {
 	config := DefaultConfig()
 	widths := []int{13, 13, 15, 3}
@@ -334,6 +335,47 @@ func TestGetStringFormat02(t *testing.T) {
 	expected := "%-13s  %-13s  %-24s  %s\n"
 	if output != expected {
 		t.Fatalf("\nGot:      %q\nExpected: %q", output, expected)
+	}
+}
+
+func TestTextAlignment(t *testing.T) {
+	config := DefaultConfig()
+	config.ColumnSpec = []*ColumnSpecification{
+		&ColumnSpecification{Alignment: AlignLeft},
+		&ColumnSpecification{Alignment: AlignRight},
+		&ColumnSpecification{Alignment: AlignRight},
+	}
+	input := []string{"Column A|Column B|Column C", "left|right|right", "x|x|x"}
+
+	expected := "Column A  Column B  Column C\n"
+	expected += "left         right     right\n"
+	expected += "x                x         x"
+
+	output := Format(input, config)
+	if output != expected {
+		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
+	}
+}
+
+func TestTextAlignmentWithANSII(t *testing.T) {
+	config := DefaultConfig()
+	config.ColumnSpec = []*ColumnSpecification{
+		&ColumnSpecification{Alignment: AlignLeft},
+		&ColumnSpecification{Alignment: AlignRight},
+		&ColumnSpecification{Alignment: AlignRight},
+	}
+	input := []string{
+		"Column A|Column B|Column C",
+		"left|right|right",
+		"\x1b[31;1mleft\x1b[0m|\x1b[32mright\x1b[0m|\x1b[34mright\x1b[0m"}
+
+	expected := "Column A  Column B  Column C\n"
+	expected += "left         right     right\n"
+	expected += "\x1b[31;1mleft\x1b[0m         \x1b[32mright\x1b[0m     \x1b[34mright\x1b[0m"
+
+	output := Format(input, config)
+	if output != expected {
+		t.Fatalf("\nexpected:\n%s\n\ngot:\n%s", expected, output)
 	}
 }
 

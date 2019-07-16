@@ -26,7 +26,7 @@ func main() {
     output := []string{
         "Name | Gender | Age",
         "Bob | Male | 38",
-        "Sally | Female | 26",
+        "Sally | Female | 9",
     }
     result := columnize.SimpleFormat(output)
     fmt.Println(result)
@@ -38,7 +38,28 @@ As you can see, you just pass in a list of strings. And the result:
 ```
 Name   Gender  Age
 Bob    Male    38
-Sally  Female  26
+Sally  Female  9
+```
+
+To right-align a column, edit a config's `ColumnSpec` and use `columnize.Format`
+instead of `columnize.SimpleFormat`. Example:
+
+```go
+    config := columnize.DefaultConfig()
+    config.ColumnSpec = []*columnize.ColumnSpecification{
+		&columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
+		&columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
+		&columnize.ColumnSpecification{Alignment: columnize.AlignRight},
+	}
+    result := columnize.Format(output, config)
+```
+
+The result:
+
+```
+Name   Gender  Age
+Bob    Male     38
+Sally  Female    9
 ```
 
 Columnize is tolerant of missing or empty fields, or even empty lines, so
