@@ -47,10 +47,10 @@ instead of `columnize.SimpleFormat`. Example:
 ```go
     config := columnize.DefaultConfig()
     config.ColumnSpec = []*columnize.ColumnSpecification{
-		&columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
-		&columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
-		&columnize.ColumnSpecification{Alignment: columnize.AlignRight},
-	}
+        &columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
+        &columnize.ColumnSpecification{Alignment: columnize.AlignLeft},
+        &columnize.ColumnSpecification{Alignment: columnize.AlignRight},
+    }
     result := columnize.Format(output, config)
 ```
 
